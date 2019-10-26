@@ -30,8 +30,10 @@ defmodule GameOfDots.Game do
       text: msg
     }
 
-    message_new = [game.messages | msg]
-    %{game | messages: message_new}
+    # message_new = [game.messages | msg]
+    IO.inspect(message)
+    message_new = game.messages ++ [message]
+    Map.put(game, :messages, message_new)
   end
 
   def generateValidLines(length, breadth) do
@@ -121,22 +123,9 @@ defmodule GameOfDots.Game do
 
   def client_view(game) do
     game
-    # %{
-    #   type: game.type,
-    #   tableName: game.table_name,
-    #   ownerId: game.user_name,
-    #   gameStarted: game.gameStarted,
-    #   gameOver: game.gameOver,
-    #   dimensions: game.dimensions,
-    #   linesDrawn: game.linesDrawn,
-    #   validLinesRemaining: game.validLinesRemaining,
-    #   turn: game.turn,
-    #   players: game.players,
-    #   audience: game.audience
-    # }
   end
 
-  def checkAlongY1Axis(game, coords, userName) do
+  def checkAlongY1Axis(game, coords, userName, turn) do
     if coords["y1"] == coords["y2"] do
       IO.inspect("check if y1 equals")
 
@@ -188,6 +177,7 @@ defmodule GameOfDots.Game do
           )
 
         game = Map.put(game, :players, newPlayers)
+        game = Map.put(game, :turn, turn)
         IO.puts("see here")
         IO.inspect(game)
         IO.puts("before")
@@ -202,7 +192,7 @@ defmodule GameOfDots.Game do
     end
   end
 
-  def checkAlongY2Axis(game, coords, userName) do
+  def checkAlongY2Axis(game, coords, userName, turn) do
     if coords["y1"] == coords["y2"] do
       IO.inspect("check if y2 equals")
       IO.puts("input")
@@ -248,8 +238,6 @@ defmodule GameOfDots.Game do
 
                 item = Map.put(item, :boxesAcquired, boxAcquired)
                 item = Map.put(item, :score, item.score + 5)
-                # IO.puts("item modi")
-                # IO.inspect(item)
               else
                 item
               end
@@ -257,6 +245,7 @@ defmodule GameOfDots.Game do
           )
 
         game = Map.put(game, :players, newPlayers)
+        game = Map.put(game, :turn, turn)
         IO.puts("see here")
         IO.inspect(game)
         IO.puts("before")
@@ -271,7 +260,7 @@ defmodule GameOfDots.Game do
     end
   end
 
-  def checkAlongX1Axis(game, coords, userName) do
+  def checkAlongX1Axis(game, coords, userName, turn) do
     if coords["x1"] == coords["x2"] do
       IO.inspect("check if x1 equals")
       IO.puts("input")
@@ -317,6 +306,7 @@ defmodule GameOfDots.Game do
 
                 item = Map.put(item, :boxesAcquired, boxAcquired)
                 item = Map.put(item, :score, item.score + 5)
+
                 # IO.puts("item modi")
                 # IO.inspect(item)
               else
@@ -326,6 +316,7 @@ defmodule GameOfDots.Game do
           )
 
         game = Map.put(game, :players, newPlayers)
+        game = Map.put(game, :turn, turn)
         IO.puts("see here")
         IO.inspect(game)
         IO.puts("before")
@@ -340,7 +331,7 @@ defmodule GameOfDots.Game do
     end
   end
 
-  def checkAlongX2Axis(game, coords, userName) do
+  def checkAlongX2Axis(game, coords, userName, turn) do
     if coords["x1"] == coords["x2"] do
       IO.inspect("check if x1 equals")
       IO.puts("input")
@@ -386,6 +377,7 @@ defmodule GameOfDots.Game do
 
                 item = Map.put(item, :boxesAcquired, boxAcquired)
                 item = Map.put(item, :score, item.score + 5)
+
                 # IO.puts("item modi")
                 # IO.inspect(item)
               else
@@ -395,6 +387,7 @@ defmodule GameOfDots.Game do
           )
 
         game = Map.put(game, :players, newPlayers)
+        game = Map.put(game, :turn, turn)
         IO.puts("see here")
         IO.inspect(game)
         IO.puts("before")
@@ -409,10 +402,43 @@ defmodule GameOfDots.Game do
     end
   end
 
+  def verifyCoordsX(coords) do
+    if coords["x1"] > coords["x2"] do
+      IO.puts("output")
+      temp = coords["x1"]
+      coords = Map.put(coords, "x1", coords["x2"])
+      coords = Map.put(coords, "x2", temp)
+      temp = coords["y1"]
+      coords = Map.put(coords, "y1", coords["y2"])
+      coords = Map.put(coords, "y2", temp)
+    else
+      coords
+    end
+  end
+
+  def verifyCoordsY(coords) do
+    if coords["y1"] > coords["y2"] do
+      IO.puts("output")
+      temp = coords["y1"]
+      coords = Map.put(coords, "y1", coords["y2"])
+      coords = Map.put(coords, "y2", temp)
+      temp = coords["x1"]
+      coords = Map.put(coords, "x1", coords["x2"])
+      coords = Map.put(coords, "x2", temp)
+    else
+      coords
+    end
+  end
+
   def draw(game, coords, userName) do
     IO.puts("In draw")
+    IO.puts("before coords")
     IO.inspect(coords)
     IO.inspect(game.validLinesRemaining)
+    coords = verifyCoordsX(coords)
+    coords = verifyCoordsY(coords)
+    IO.puts("before coords")
+    IO.inspect(coords)
 
     if Enum.member?(game.validLinesRemaining, coords) do
       IO.puts("Step 1")
@@ -423,13 +449,14 @@ defmodule GameOfDots.Game do
       length = length(game.players)
       game = Map.put(game, :linesDrawn, linesDrawn)
       game = Map.put(game, :validLinesRemaining, validLinesRemaining)
+      prevTurn = game.turn
       turn = rem(game.turn + 1, length)
       game = Map.put(game, :turn, turn)
       # IO.inspect(game)
-      game = checkAlongY1Axis(game, coords, userName)
-      game = checkAlongY2Axis(game, coords, userName)
-      game = checkAlongX1Axis(game, coords, userName)
-      game = checkAlongX2Axis(game, coords, userName)
+      game = checkAlongY1Axis(game, coords, userName, prevTurn)
+      game = checkAlongY2Axis(game, coords, userName, prevTurn)
+      game = checkAlongX1Axis(game, coords, userName, prevTurn)
+      game = checkAlongX2Axis(game, coords, userName, prevTurn)
 
       if length(game.validLinesRemaining) == 0 do
         game = Map.put(game, :gameOver, true)
